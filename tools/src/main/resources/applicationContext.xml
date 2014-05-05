@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <context:property-placeholder location="classpath:ApplicationResources.properties" ignore-unresolvable="true" />
+
+    <context:component-scan base-package="com.qunar.hotel.qtypeahead.refresh" />
+
+    <!-- 线程执行器配置，用于任务注册 -->
+    <bean id="executor" class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor" />
+
+    <!-- 调度业务 -->
+    <bean id="tasks" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+        <property name="jobDetail">
+            <bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+                <property name="targetObject" ref="taskSuite" />
+                <property name="targetMethod" value="execute" />
+            </bean>
+        </property>
+        <property name="startDelay" value="1000" />
+        <property name="repeatInterval" value="60000" />
+    </bean>
+
+    <!-- 设置调度 -->
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="tasks" />
+            </list>
+        </property>
+        <property name="taskExecutor" ref="executor" />
+    </bean>
+
+    <bean id="versionProperties" class="com.qunar.hotel.qtypeahead.util.ExtendedProperties" init-method="load">
+        <property name="fileLocation" value="${sync.store}/version.properties" />
+    </bean>
+    <bean id="intervalProperties" class="com.qunar.hotel.qtypeahead.util.ExtendedProperties" init-method="load">
+        <property name="configLocation" value="classpath:interval.properties" />
+    </bean>
+     <bean id="qTypeaheadManager" class="com.qunar.hotel.qtypeahead.datastructure.QTypeaheadManager">
+        <property name="dictPath" value="${sync.store}/dict.dat" />
+    </bean>
+    <bean id="qtypeaheadSearcher" class="com.qunar.hotel.qtypeahead.search.QTypeaheadSearcher">
+    </bean>
+    <bean id="qCensor" class="com.qunar.hotel.qcensor.QCensorImpl">
+        <constructor-arg name="interval" value="600"/>
+        <constructor-arg name="dataSourceUrl" value="http://l-hs.qunar.com/iapi/hs/qcensordict"/>
+        <constructor-arg name="sync" value="true"/>
+    </bean>
+</beans>

@@ -1,0 +1,31 @@
+#配置hadoop, hive环境
+执行以下命令，下载文件包
+
+    make
+
+执行如下命令，添加环境变量，该命令将在~/.bashrc追加HADOOP_HOME/HIVE_HOME/PATH变量
+
+    make install
+
+#初始化表结构
+执行如下命令加载ddl初始化表结构，注意:该操作将删除旧的表结构: (由于HDFS中的文件归hadoop_hotel用户所有，所以本地必须使用hadoop_hotel用户执行，如果没有请创建)
+
+    ./init-schema.sh ddl/xxxx.ddl
+
+创建指定表(所有的表都是external table，即执行drop table时不会删除实际数据)
+
+#增加数据分区
+使用hadoop_hotel用户执行hive命令，账户登录hive服务后执行如下命令，即可将2012-10-19:08时的日志数据添加到表查询中:
+
+    alter table twell_detail_click_log add partition (dt='2012-10-19', ht='08') location '/user/hotel/twell/detail_click/2012-10-19/08';
+
+具体location地址可查看http://l-hdps3.data.cn6.qunar.com:50075/browseDirectory.jsp?dir=%2Fuser%2Fhotel&namenodeInfoPort=50070
+
+#执行查询
+使用以下命令查询对应partition数据:
+
+    select * from twell_detail_click_log where dt='2012-10-19' and ht='08' limit 2;
+
+
+
+参考http://wiki.corp.qunar.com/pages/viewpage.action?pageId=20713172    
